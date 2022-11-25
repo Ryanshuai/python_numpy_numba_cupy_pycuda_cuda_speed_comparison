@@ -1,9 +1,10 @@
 import pycuda.driver as driver
 from pycuda.compiler import SourceModule
+import pycuda.autoinit  # need this for decode mod string
 import numpy as np
 
 # for reduction --------------------------------------------------------------------------------------------------------
-BLOCK_SIZE = 32
+BLOCK_SIZE = 512
 reducation_mod = SourceModule("""
 #include <stdio.h>
 #define BLOCK_SIZE %(block_size)d
@@ -39,11 +40,11 @@ __global__ void optimizedReduction(float *out, float *in, unsigned size) {
 """ % {"block_size": BLOCK_SIZE})
 
 
-def pycuda_reduction(nums, res):
+def pycuda_reduction(nums, nums_len, res):
     thread_per_block = BLOCK_SIZE
-    blocks_per_grid = (nums.size + thread_per_block - 1) // thread_per_block
+    blocks_per_grid = (nums_len + thread_per_block - 1) // thread_per_block
     optimizedReduction = reducation_mod.get_function("optimizedReduction")
-    optimizedReduction(res, nums, np.int32(nums.size),
+    optimizedReduction(res, nums, np.int32(nums_len),
                        block=(thread_per_block, 1, 1), grid=(blocks_per_grid, 1), shared=BLOCK_SIZE * 2 * 4)
 
 
@@ -66,12 +67,13 @@ TILE_SIZE = 32
 
 def pycuda_matadd(dim, mat_A_gpu, mat_B_gpu, mat_res_gpu):
     matadd = matadd_mod.get_function("matAdd")
-    grid_dim = (A.shape[0] + TILE_SIZE - 1) // TILE_SIZE, (A.shape[1] + TILE_SIZE - 1) // TILE_SIZE
-    matadd(dim, mat_A_gpu, mat_B_gpu, mat_res_gpu, block=(TILE_SIZE, TILE_SIZE, 1), grid=grid_dim)
+    grid_dim = (dim + TILE_SIZE - 1) // TILE_SIZE, (dim + TILE_SIZE - 1) // TILE_SIZE
+    matadd(np.int32(dim), mat_A_gpu, mat_B_gpu, mat_res_gpu, block=(TILE_SIZE, TILE_SIZE, 1), grid=grid_dim)
 
 
 # for matmul -----------------------------------------------------------------------------------------------------------
 matmul_mod = SourceModule("""
+#include <stdio.h>
 #define TILE_SIZE %(tile_size)d
 __global__ void mysgemm(int m, int n, int k, const float *A, const float *B, float *C) {
 
@@ -123,11 +125,11 @@ __global__ void mysgemm(int m, int n, int k, const float *A, const float *B, flo
 """ % {"tile_size": TILE_SIZE})
 
 
-def pycuda_matmul(m, n, k, mat_A_gpu, mat_B_gpu, mat_res_gpu):
+def pycuda_matmul(m, k, n, mat_A_gpu, mat_B_gpu, mat_res_gpu):
     matmul = matmul_mod.get_function("mysgemm")
     grid_dim = (n + TILE_SIZE - 1) // TILE_SIZE, (m + TILE_SIZE - 1) // TILE_SIZE
-    matmul(m, n, k, mat_A_gpu, mat_B_gpu, mat_res_gpu, block=(TILE_SIZE, TILE_SIZE, 1), grid=grid_dim,
-           shared=2 * TILE_SIZE * TILE_SIZE * 4)
+    matmul(np.int32(m), np.int32(n), np.int32(k), mat_A_gpu, mat_B_gpu, mat_res_gpu,
+           block=(TILE_SIZE, TILE_SIZE, 1), grid=grid_dim, shared=2 * TILE_SIZE * TILE_SIZE * 4)
 
 
 if __name__ == '__main__':
@@ -136,30 +138,37 @@ if __name__ == '__main__':
     A_gpu = driver.mem_alloc(A.nbytes)
     driver.memcpy_htod(A_gpu, A)
     res_gpu = driver.mem_alloc(res.nbytes)
-    pycuda_reduction(A_gpu, res_gpu, )
+    pycuda_reduction(A_gpu, len(A), res_gpu)
     driver.memcpy_dtoh(res, res_gpu)
     print(np.allclose(np.sum(A), res.sum()))
 
-    # A = np.random.randn(1000, 1000).astype(np.float32)
-    # A_gpu = driver.mem_alloc(A.nbytes)
-    # driver.memcpy_htod(A_gpu, A)
-    # B = np.random.randn(1000, 1000).astype(np.float32)
-    # B_gpu = driver.mem_alloc(B.nbytes)
-    # driver.memcpy_htod(B_gpu, B)
-    # C = np.zeros((1000, 1000), dtype=np.float32)
-    # C_gpu = driver.mem_alloc(C.nbytes)
-    # pycuda_matadd(np.int32(A.shape[0]), A_gpu, B_gpu, C_gpu)
-    # driver.memcpy_dtoh(C, C_gpu)
-    # print(np.allclose(C, A + B))
-    #
-    # A = np.random.randn(1000, 1000).astype(np.float32)
-    # A_gpu = driver.mem_alloc(A.nbytes)
-    # driver.memcpy_htod(A_gpu, A)
-    # B = np.random.randn(1000, 1000).astype(np.float32)
-    # B_gpu = driver.mem_alloc(B.nbytes)
-    # driver.memcpy_htod(B_gpu, B)
-    # C = np.zeros((1000, 1000), dtype=np.float32)
-    # C_gpu = driver.mem_alloc(C.nbytes)
-    # pycuda_matmul(np.int32(A.shape[0]), np.int32(A.shape[1]), np.int32(B.shape[1]), A_gpu, B_gpu, C_gpu)
-    # driver.memcpy_dtoh(C, C_gpu)
-    # print(np.allclose(C, A @ B))
+    A = np.random.randn(1000, 1000).astype(np.float32)
+    A_f = A.flatten()
+    A_gpu = driver.mem_alloc(A_f.nbytes)
+    driver.memcpy_htod(A_gpu, A_f)
+    B = np.random.randn(1000, 1000).astype(np.float32)
+    B_f = B.flatten()
+    B_gpu = driver.mem_alloc(B_f.nbytes)
+    driver.memcpy_htod(B_gpu, B_f)
+    C = np.zeros((1000, 1000), dtype=np.float32)
+    C_f = C.flatten()
+    C_gpu = driver.mem_alloc(C_f.nbytes)
+    pycuda_matadd(A.shape[0], A_gpu, B_gpu, C_gpu)
+    driver.memcpy_dtoh(C, C_gpu)
+    print(np.allclose(C, A + B))
+
+    A = np.random.randn(1000, 1000).astype(np.float32)
+    A_f = A.flatten()
+    A_gpu = driver.mem_alloc(A_f.nbytes)
+    driver.memcpy_htod(A_gpu, A_f)
+    B = np.random.randn(1000, 1000).astype(np.float32)
+    B_f = B.flatten()
+    B_gpu = driver.mem_alloc(B_f.nbytes)
+    driver.memcpy_htod(B_gpu, B_f)
+    C = np.zeros((1000, 1000), dtype=np.float32)
+    C_f = C.flatten()
+    C_gpu = driver.mem_alloc(C_f.nbytes)
+    pycuda_matmul(A.shape[0], A.shape[1], B.shape[1], A_gpu, B_gpu, C_gpu)
+    driver.memcpy_dtoh(C, C_gpu)
+    print(np.allclose(np.resize(C, (1000, 1000)), A @ B))
+    print(np.max(np.abs(np.resize(C, (1000, 1000)) - A @ B)))

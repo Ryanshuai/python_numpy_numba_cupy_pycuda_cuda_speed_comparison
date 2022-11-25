@@ -1,24 +1,7 @@
-import cupy
 import numpy as np
 import cupy as cp
-from time import time
-
-TEST_TIMES = 10
 
 
-def measure_time(func):
-    def wrapper(nums, test_times):
-        sum = func(nums)
-        tic = time()
-        for i in range(test_times):
-            sum = func(nums)
-        toc = time()
-        return sum, (toc - tic) / test_times
-
-    return wrapper
-
-
-@measure_time
 def python_reduce(nums):
     sum = 0
     for num in nums:
@@ -26,52 +9,65 @@ def python_reduce(nums):
     return sum
 
 
-@measure_time
-def python_matsum(mat_1, mat_2, mat_res):
-    for i in range(mat_1.shape[0]):
-        for j in range(mat_1.shape[1]):
-            mat_res[i][j] = mat_1[i][j] + mat_2[i][j]
+def python_matsum(mat_A, mat_B, mat_res):
+    for i in range(mat_A.shape[0]):
+        for j in range(mat_A.shape[1]):
+            mat_res[i][j] = mat_A[i][j] + mat_B[i][j]
     return mat_res
 
 
-@measure_time
-def numpy_matmul(mat1, mat2, mat_res):
-    for i in range(len(mat1)):
-        for j in range(len(mat2[0])):
-            for k in range(len(mat2)):
-                mat_res[i][j] += mat1[i][k] * mat2[k][j]
+def python_matmul(mat_A, mat_B, mat_res):
+    for i in range(mat_res.shape[0]):
+        for j in range(mat_res.shape[1]):
+            for k in range(mat_A.shape[1]):
+                mat_res[i][j] += mat_A[i][k] * mat_B[k][j]
     return mat_res
 
 
-@measure_time
 def numpy_reduce(nums: np.ndarray):
     return np.sum(nums)
 
 
-@measure_time
-def numpy_matsum(mat_1, mat_2, mat_res):
-    mat_res = mat_1 + mat_2
-    return mat_res
+def numpy_matsum(mat_A, mat_B):
+    return mat_A + mat_B
 
 
-@measure_time
+def numpy_matmul(mat_A, mat_B):
+    return mat_A @ mat_B
+
+
 def cupy_reduce(nums: np.ndarray):
     return cp.sum(nums)
 
 
-@measure_time
-def cupy_matsum(mat_1, mat_2, mat_res):
-    mat_res = mat_1 + mat_2
-    return mat_res
+def cupy_matsum(mat_A, mat_B):
+    return mat_A + mat_B
 
 
-@measure_time
-def cupy_matmul(mat1, mat2, mat_res):
-    mat_res = cp.matmul(mat1, mat2)
-    return mat_res
+def cupy_matmul(mat_A, mat_B):
+    return mat_A @ mat_B
 
 
-arr = np.random.rand(100_000_000)
-print("Python: ", python_reduce(arr, TEST_TIMES))
-print("Numpy: ", numpy_reduce(arr, TEST_TIMES))
-print("Cupy: ", cupy_reduce(cupy.asarray(arr), TEST_TIMES))
+if __name__ == '__main__':
+    A = np.random.rand(1000).astype(np.float32)
+    res = np.zeros(((A.size + 1024 - 1) // 1024), dtype=np.float32)
+    print(python_reduce(A))
+    print(numpy_reduce(A))
+    print(cupy_reduce(A))
+
+    A = np.random.randn(100, 100).astype(np.float32)
+    B = np.random.randn(100, 100).astype(np.float32)
+    C = np.zeros((100, 100), dtype=np.float32)
+
+    print(np.allclose(python_matsum(A, B, C), numpy_matsum(A, B)))
+    cupy_sum_res = cupy_matsum(cp.asarray(A), cp.asarray(B)).get()
+    print(np.allclose(numpy_matsum(A, B), cupy_sum_res))
+
+    A = np.random.randn(100, 100).astype(np.float32)
+    B = np.random.randn(100, 100).astype(np.float32)
+    C = np.zeros((100, 100), dtype=np.float32)
+
+    print(np.allclose(python_matmul(A, B, C), numpy_matmul(A, B), rtol=1e-4, atol=1e-4))
+
+    cupy_res = cupy_matmul(cp.asarray(A), cp.asarray(B)).get()
+    print(np.allclose(numpy_matmul(A, B), cupy_res, rtol=1e-4, atol=1e-4))

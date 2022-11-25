@@ -170,5 +170,4 @@ if __name__ == '__main__':
     C_gpu = driver.mem_alloc(C_f.nbytes)
     pycuda_matmul(A.shape[0], A.shape[1], B.shape[1], A_gpu, B_gpu, C_gpu)
     driver.memcpy_dtoh(C, C_gpu)
-    print(np.allclose(np.resize(C, (1000, 1000)), A @ B))
-    print(np.max(np.abs(np.resize(C, (1000, 1000)) - A @ B)))
+    print(np.allclose(np.resize(C, (1000, 1000)), A @ B, rtol=1e-4, atol=1e-4))

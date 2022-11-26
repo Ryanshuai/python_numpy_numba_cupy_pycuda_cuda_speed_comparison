@@ -4,7 +4,7 @@ import cupy as cp
 from numba import cuda as numba_cuda
 
 from python_numpy_cupy import python_reduce, numpy_reduce, cupy_reduce
-from python_numpy_cupy import python_matsum, numpy_matadd, cupy_matadd
+from python_numpy_cupy import python_matadd, numpy_matadd, cupy_matadd
 from python_numpy_cupy import python_matmul, numpy_matmul, cupy_matmul
 from numba_calculations import numba_reduce, numba_matadd, numba_matmul
 
@@ -60,7 +60,7 @@ if __name__ == '__main__':
         A_python = np.random.randn(n, n).astype(np.float32)
         B_python = np.random.randn(n, n).astype(np.float32)
         res_python = np.zeros((n, n), dtype=np.float32)
-        print(measure_time(python_matsum, A_python, B_python, res_python, test_count=3))
+        print(measure_time(python_matadd, A_python, B_python, res_python, test_count=3))
 
     print("\n Numpy matadd time: ")
     for exp in range(2, 5):

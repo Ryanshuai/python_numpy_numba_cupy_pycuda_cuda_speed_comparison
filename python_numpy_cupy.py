@@ -9,7 +9,7 @@ def python_reduce(nums):
     return sum
 
 
-def python_matsum(mat_A, mat_B, mat_res):
+def python_matadd(mat_A, mat_B, mat_res):
     for i in range(mat_A.shape[0]):
         for j in range(mat_A.shape[1]):
             mat_res[i][j] = mat_A[i][j] + mat_B[i][j]
@@ -60,7 +60,7 @@ if __name__ == '__main__':
     B = np.random.randn(100, 100).astype(np.float32)
     C = np.zeros((100, 100), dtype=np.float32)
 
-    print(np.allclose(python_matsum(A, B, C), numpy_matadd(A, B)))
+    print(np.allclose(python_matadd(A, B, C), numpy_matadd(A, B)))
     cupy_sum_res = cupy_matadd(cp.asarray(A), cp.asarray(B)).get()
     print(np.allclose(numpy_matadd(A, B), cupy_sum_res))
 

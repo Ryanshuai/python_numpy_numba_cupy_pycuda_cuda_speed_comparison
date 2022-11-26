@@ -40,12 +40,23 @@ __global__ void optimizedReduction(float *out, float *in, unsigned size) {
 """ % {"block_size": BLOCK_SIZE})
 
 
-def pycuda_reduction(nums, nums_len, res):
+def pycuda_reduce(nums, nums_len, res):
     thread_per_block = BLOCK_SIZE
     blocks_per_grid = (nums_len + thread_per_block - 1) // thread_per_block
     optimizedReduction = reducation_mod.get_function("optimizedReduction")
     optimizedReduction(res, nums, np.int32(nums_len),
                        block=(thread_per_block, 1, 1), grid=(blocks_per_grid, 1), shared=BLOCK_SIZE * 2 * 4)
+
+
+def test_pycuda():
+    A = np.random.rand(1000).astype(np.float32)
+    res = np.zeros(((A.size + BLOCK_SIZE - 1) // BLOCK_SIZE), dtype=np.float32)
+    A_gpu = driver.mem_alloc(A.nbytes)
+    driver.memcpy_htod(A_gpu, A)
+    res_gpu = driver.mem_alloc(res.nbytes)
+    pycuda_reduce(A_gpu, len(A), res_gpu)
+    driver.memcpy_dtoh(res, res_gpu)
+    print(np.allclose(np.sum(A), res.sum()))
 
 
 # for matadd -----------------------------------------------------------------------------------------------------------
@@ -133,12 +144,24 @@ def pycuda_matmul(m, k, n, mat_A_gpu, mat_B_gpu, mat_res_gpu):
 
 
 if __name__ == '__main__':
+    from time import perf_counter
+
+
+    def measure_time(func, *args, test_count=10):
+        func(*args)
+        start = perf_counter()
+        for _ in range(test_count):
+            func(*args)
+        end = perf_counter()
+        return (end - start) / test_count
+
+
     A = np.random.rand(1000).astype(np.float32)
     res = np.zeros(((A.size + BLOCK_SIZE - 1) // BLOCK_SIZE), dtype=np.float32)
     A_gpu = driver.mem_alloc(A.nbytes)
     driver.memcpy_htod(A_gpu, A)
     res_gpu = driver.mem_alloc(res.nbytes)
-    pycuda_reduction(A_gpu, len(A), res_gpu)
+    pycuda_reduce(A_gpu, len(A), res_gpu)
     driver.memcpy_dtoh(res, res_gpu)
     print(np.allclose(np.sum(A), res.sum()))
 
@@ -171,3 +194,56 @@ if __name__ == '__main__':
     pycuda_matmul(A.shape[0], A.shape[1], B.shape[1], A_gpu, B_gpu, C_gpu)
     driver.memcpy_dtoh(C, C_gpu)
     print(np.allclose(np.resize(C, (1000, 1000)), A @ B, rtol=1e-4, atol=1e-4))
+
+    print("\nREDUCE: ******************************************************************************")
+    for exp in range(3, 10):
+        n = 10 ** exp
+        print(f"n = 1e{exp}:", end=' ')
+
+        A_pycuda_cpu = np.random.rand(n).astype(np.float32)
+        res_pycuda_cpu = np.zeros(((A_pycuda_cpu.size + BLOCK_SIZE - 1) // BLOCK_SIZE), dtype=np.float32)
+        A_pycuda_gpu = driver.mem_alloc(A_pycuda_cpu.nbytes)
+        res_pycuda_gpu = driver.mem_alloc(res_pycuda_cpu.nbytes)
+        driver.memcpy_htod(A_pycuda_gpu, A_pycuda_cpu)
+        print("Pycuda reduce time: ",
+              measure_time(pycuda_reduce, A_pycuda_gpu, len(A_pycuda_cpu), res_pycuda_gpu, test_count=10))
+
+    print("\nMATADD: ******************************************************************************")
+    for exp in range(2, 5):
+        n = 10 ** exp
+        print(f"n = 1e{exp}:", end=' ')
+
+        A_pycuda_cpu = np.random.randn(n, n).astype(np.float32)
+        A_pycuda_cpu_f = A_pycuda_cpu.flatten()
+        A_pycuda_gpu = driver.mem_alloc(A_pycuda_cpu_f.nbytes)
+        driver.memcpy_htod(A_pycuda_gpu, A_pycuda_cpu_f)
+        B_pycuda_cpu = np.random.randn(n, n).astype(np.float32)
+        B_pycuda_cpu_f = B_pycuda_cpu.flatten()
+        B_pycuda_gpu = driver.mem_alloc(B_pycuda_cpu_f.nbytes)
+        driver.memcpy_htod(B_pycuda_gpu, B_pycuda_cpu_f)
+        C_pycuda_cpu = np.zeros((n, n), dtype=np.float32)
+        C_pycuda_cpu_f = C_pycuda_cpu.flatten()
+        C_pycuda_gpu = driver.mem_alloc(C_pycuda_cpu_f.nbytes)
+        print("Pycuda matmul time: ",
+              measure_time(pycuda_matadd, A_pycuda_cpu.shape[0], A_pycuda_gpu, B_pycuda_gpu, C_pycuda_gpu,
+                           test_count=10))
+
+    print("\nMATMUL: ******************************************************************************")
+    for exp in range(2, 5):
+        n = 10 ** exp
+        print(f"n = 1e{exp}:", end=' ')
+
+        A_pycuda_cpu = np.random.randn(n, n).astype(np.float32)
+        A_pycuda_cpu_f = A_pycuda_cpu.flatten()
+        A_pycuda_gpu = driver.mem_alloc(A_pycuda_cpu_f.nbytes)
+        driver.memcpy_htod(A_pycuda_gpu, A_pycuda_cpu_f)
+        B_pycuda_cpu = np.random.randn(n, n).astype(np.float32)
+        B_pycuda_cpu_f = B_pycuda_cpu.flatten()
+        B_pycuda_gpu = driver.mem_alloc(B_pycuda_cpu_f.nbytes)
+        driver.memcpy_htod(B_pycuda_gpu, B_pycuda_cpu_f)
+        C_pycuda_cpu = np.zeros((n, n), dtype=np.float32)
+        C_pycuda_cpu_f = C_pycuda_cpu.flatten()
+        C_pycuda_gpu = driver.mem_alloc(C_pycuda_cpu_f.nbytes)
+        print("Pycuda matmul time: ",
+              measure_time(pycuda_matmul, A_pycuda_cpu.shape[0], A_pycuda_cpu.shape[1], B_pycuda_cpu.shape[1],
+                           A_pycuda_gpu, B_pycuda_gpu, C_pycuda_gpu, test_count=10))

@@ -28,7 +28,7 @@ def numpy_reduce(nums: np.ndarray):
     return np.sum(nums)
 
 
-def numpy_matsum(mat_A, mat_B):
+def numpy_matadd(mat_A, mat_B):
     return mat_A + mat_B
 
 
@@ -40,7 +40,7 @@ def cupy_reduce(nums: np.ndarray):
     return cp.sum(nums)
 
 
-def cupy_matsum(mat_A, mat_B):
+def cupy_matadd(mat_A, mat_B):
     return mat_A + mat_B
 
 
@@ -53,15 +53,16 @@ if __name__ == '__main__':
     res = np.zeros(((A.size + 1024 - 1) // 1024), dtype=np.float32)
     print(python_reduce(A))
     print(numpy_reduce(A))
-    print(cupy_reduce(A))
+    A_cupy = cp.asarray(A)
+    print(cupy_reduce(A_cupy))
 
     A = np.random.randn(100, 100).astype(np.float32)
     B = np.random.randn(100, 100).astype(np.float32)
     C = np.zeros((100, 100), dtype=np.float32)
 
-    print(np.allclose(python_matsum(A, B, C), numpy_matsum(A, B)))
-    cupy_sum_res = cupy_matsum(cp.asarray(A), cp.asarray(B)).get()
-    print(np.allclose(numpy_matsum(A, B), cupy_sum_res))
+    print(np.allclose(python_matsum(A, B, C), numpy_matadd(A, B)))
+    cupy_sum_res = cupy_matadd(cp.asarray(A), cp.asarray(B)).get()
+    print(np.allclose(numpy_matadd(A, B), cupy_sum_res))
 
     A = np.random.randn(100, 100).astype(np.float32)
     B = np.random.randn(100, 100).astype(np.float32)

@@ -8,7 +8,7 @@ BLOCK_SIZE_2 = BLOCK_SIZE * 2
 
 
 @cuda.jit
-def numba_reduction_thread(nums, res):
+def numba_reduce_thread(nums, res):
     partial_sum = cuda.shared.array(shape=BLOCK_SIZE_2, dtype=numba.float32)
     thread_idx = cuda.threadIdx.x
     block_start_idx = cuda.blockIdx.x * cuda.blockDim.x * 2
@@ -34,11 +34,11 @@ def numba_reduction_thread(nums, res):
         res[cuda.blockIdx.x] = partial_sum[0]
 
 
-def numba_reduction(nums, res):
+def numba_reduce(nums, res):
     threads_per_block = BLOCK_SIZE
     blocks_per_grid = (nums.size + threads_per_block - 1) // threads_per_block
 
-    numba_reduction_thread[blocks_per_grid, threads_per_block](nums, res)
+    numba_reduce_thread[blocks_per_grid, threads_per_block](nums, res)
 
 
 # for matadd -----------------------------------------------------------------------------------------------------------
@@ -115,7 +115,7 @@ if __name__ == '__main__':
     A = np.random.rand(1000).astype(np.float32)
     res = np.zeros(((A.size + BLOCK_SIZE - 1) // BLOCK_SIZE), dtype=np.float32)
     res_cuda = cuda.to_device(res)
-    numba_reduction(cuda.to_device(A), res_cuda)
+    numba_reduce(cuda.to_device(A), res_cuda)
     res = res_cuda.copy_to_host()
     print(np.allclose(np.sum(A), np.sum(res)))
 

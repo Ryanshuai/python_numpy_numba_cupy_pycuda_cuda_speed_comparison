@@ -198,7 +198,7 @@ if __name__ == '__main__':
     print("\nREDUCE: ******************************************************************************")
     for exp in range(3, 10):
         n = 10 ** exp
-        print(f"n = 1e{exp}:", end=' ')
+        print(f"1e{exp}:", end=' ')
 
         A_pycuda_cpu = np.random.rand(n).astype(np.float32)
         res_pycuda_cpu = np.zeros(((A_pycuda_cpu.size + BLOCK_SIZE - 1) // BLOCK_SIZE), dtype=np.float32)
@@ -211,7 +211,7 @@ if __name__ == '__main__':
     print("\nMATADD: ******************************************************************************")
     for exp in range(2, 5):
         n = 10 ** exp
-        print(f"n = 1e{exp}:", end=' ')
+        print(f"1e{exp}:", end=' ')
 
         A_pycuda_cpu = np.random.randn(n, n).astype(np.float32)
         A_pycuda_cpu_f = A_pycuda_cpu.flatten()
@@ -231,7 +231,7 @@ if __name__ == '__main__':
     print("\nMATMUL: ******************************************************************************")
     for exp in range(2, 5):
         n = 10 ** exp
-        print(f"n = 1e{exp}:", end=' ')
+        print(f"1e{exp}:", end=' ')
 
         A_pycuda_cpu = np.random.randn(n, n).astype(np.float32)
         A_pycuda_cpu_f = A_pycuda_cpu.flatten()

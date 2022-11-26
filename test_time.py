@@ -23,28 +23,28 @@ if __name__ == '__main__':
     print("Python reduce time:")
     for exp in range(3, 8):
         n = 10 ** exp
-        print(f"n = 1e{exp}:", end=' ')
+        print(f"1e{exp}:", end=' ')
         A_python = np.random.rand(n).astype(np.float32)
         print(measure_time(python_reduce, A_python, test_count=3))
 
     print("\n Numpy reduce time:")
     for exp in range(3, 10):
         n = 10 ** exp
-        print(f"n = 1e{exp}:", end=' ')
+        print(f"1e{exp}:", end=' ')
         A_numpy = np.random.rand(n).astype(np.float32)
         print(measure_time(numpy_reduce, A_numpy, test_count=10))
 
     print("\n Cupy reduce time:")
     for exp in range(3, 10):
         n = 10 ** exp
-        print(f"n = 1e{exp}:", end=' ')
+        print(f"1e{exp}:", end=' ')
         A_cupy = cp.asarray(np.random.rand(n).astype(np.float32))
         print(measure_time(cupy_reduce, A_cupy, test_count=10))
 
     print("\n Numba reduce time:")
     for exp in range(3, 10):
         n = 10 ** exp
-        print(f"n = 1e{exp}:", end=' ')
+        print(f"1e{exp}:", end=' ')
         BLOCK_SIZE = 512
         A_numba_cpu = np.random.rand(n).astype(np.float32)
         A_numba_gpu = numba_cuda.to_device(A_numba_cpu)
@@ -54,9 +54,9 @@ if __name__ == '__main__':
 
     print("\nMATADD: ******************************************************************************")
     print("Python matadd time: ")
-    for exp in range(2, 3):
+    for exp in range(2, 4):
         n = 10 ** exp
-        print(f"n = 1e{exp}:", end=' ')
+        print(f"1e{exp}:", end=' ')
         A_python = np.random.randn(n, n).astype(np.float32)
         B_python = np.random.randn(n, n).astype(np.float32)
         res_python = np.zeros((n, n), dtype=np.float32)
@@ -65,7 +65,7 @@ if __name__ == '__main__':
     print("\n Numpy matadd time: ")
     for exp in range(2, 5):
         n = 10 ** exp
-        print(f"n = 1e{exp}:", end=' ')
+        print(f"1e{exp}:", end=' ')
         A_numpy = np.random.randn(n, n).astype(np.float32)
         B_numpy = np.random.randn(n, n).astype(np.float32)
         res_numpy = np.zeros((n, n), dtype=np.float32)
@@ -74,7 +74,7 @@ if __name__ == '__main__':
     print("\n Cupy matadd time: ")
     for exp in range(2, 5):
         n = 10 ** exp
-        print(f"n = 1e{exp}:", end=' ')
+        print(f"1e{exp}:", end=' ')
         A_cupy = cp.asarray(np.random.randn(n, n).astype(np.float32))
         B_cupy = cp.asarray(np.random.randn(n, n).astype(np.float32))
         print(measure_time(cupy_matadd, A_cupy, B_cupy, test_count=10))
@@ -82,7 +82,7 @@ if __name__ == '__main__':
     print("\n Numba matadd time: ")
     for exp in range(2, 5):
         n = 10 ** exp
-        print(f"n = 1e{exp}:", end=' ')
+        print(f"1e{exp}:", end=' ')
         BLOCK_SIZE = 512
         A_numba_cpu = np.random.randn(n, n).astype(np.float32)
         B_numba_cpu = np.random.randn(n, n).astype(np.float32)
@@ -94,18 +94,17 @@ if __name__ == '__main__':
 
     print("\nMATMUL: ******************************************************************************")
     print("Python matmul time: ")
-    for exp in range(2, 3):
-        n = 10 ** exp
-        print(f"n = 1e{exp}:", end=' ')
+    for n in [100, 200]:
+        print(f"n:", end=' ')
         A_python = np.random.randn(n, n).astype(np.float32)
         B_python = np.random.randn(n, n).astype(np.float32)
         res_python = np.zeros((n, n), dtype=np.float32)
-        print(measure_time(python_matmul, A_python, B_python, res_python, test_count=3))
+        print(measure_time(python_matmul, A_python, B_python, res_python, test_count=1))
 
     print("\n Numpy matmul time: ")
     for exp in range(2, 5):
         n = 10 ** exp
-        print(f"n = 1e{exp}:", end=' ')
+        print(f"1e{exp}:", end=' ')
         A_numpy = np.random.randn(n, n).astype(np.float32)
         B_numpy = np.random.randn(n, n).astype(np.float32)
         res_numpy = np.zeros((n, n), dtype=np.float32)
@@ -114,7 +113,7 @@ if __name__ == '__main__':
     print("\n Cupy matmul time: ")
     for exp in range(2, 5):
         n = 10 ** exp
-        print(f"n = 1e{exp}:", end=' ')
+        print(f"1e{exp}:", end=' ')
         A_cupy = cp.asarray(np.random.randn(n, n).astype(np.float32))
         B_cupy = cp.asarray(np.random.randn(n, n).astype(np.float32))
         print(measure_time(cupy_matmul, A_cupy, B_cupy, test_count=10))
@@ -122,7 +121,7 @@ if __name__ == '__main__':
     print("\n Numba matmul time: ")
     for exp in range(2, 5):
         n = 10 ** exp
-        print(f"n = 1e{exp}:", end=' ')
+        print(f"1e{exp}:", end=' ')
         BLOCK_SIZE = 512
         A_numba_cpu = np.random.randn(n, n).astype(np.float32)
         B_numba_cpu = np.random.randn(n, n).astype(np.float32)

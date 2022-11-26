@@ -30,8 +30,8 @@ y_reduce_cuda = [0.004223, 0.003536, 0.003121, 0.003592, 0.003897, 0.002833, 0.0
 plt.plot(x_reduce_cuda, y_reduce_cuda, "r", label="cuda")
 
 plt.title('reduce')
-plt.xlabel('mat length', fontsize=14)
-plt.ylabel('time', fontsize=14)
+plt.xlabel('mat length')
+plt.ylabel('time')
 plt.xscale('log')
 plt.yscale('log')
 plt.legend(loc="upper left")
@@ -62,8 +62,8 @@ y_matadd_cuda = [0.002780, 0.004260, 0.007070]
 plt.plot(x_matadd_cuda, y_matadd_cuda, "r", label="cuda")
 
 plt.title('matadd')
-plt.xlabel('mat length', fontsize=14)
-plt.ylabel('time', fontsize=14)
+plt.xlabel('mat length')
+plt.ylabel('time')
 plt.xscale('log')
 plt.yscale('log')
 plt.legend()
@@ -91,11 +91,11 @@ plt.plot(x_matmul_pycuda, y_matmul_pycuda, "black", label="pycuda")
 
 x_matmul_cuda = [1e2, 1e3, 1e4]
 y_matmul_cuda = [0.003354, 0.006734, 1.549046]
-plt.plot(x_matmul_cuda, y_matmul_cuda, "r", label="pycuda")
+plt.plot(x_matmul_cuda, y_matmul_cuda, "r", label="cuda")
 
 plt.title('matmul')
-plt.xlabel('mat length', fontsize=14)
-plt.ylabel('time', fontsize=14)
+plt.xlabel('mat length')
+plt.ylabel('time')
 plt.xscale('log')
 plt.yscale('log')
 plt.legend()

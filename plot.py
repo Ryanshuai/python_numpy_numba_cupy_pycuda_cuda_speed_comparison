@@ -25,6 +25,10 @@ y_reduce_pycuda = [4.6659999999976165e-05, 4.885999999997282e-05, 5.092000000002
                    1.925000000002619e-05, 1.911999999997249e-05, 4.552999999987151e-05]
 plt.plot(x_reduce_pycuda, y_reduce_pycuda, "black", label="pycuda")
 
+x_reduce_cuda = [1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9]
+y_reduce_cuda = [0.004223, 0.003536, 0.003121, 0.003592, 0.003897, 0.002833, 0.018442]
+plt.plot(x_reduce_cuda, y_reduce_cuda, "r", label="cuda")
+
 plt.title('reduce')
 plt.xlabel('mat length', fontsize=14)
 plt.ylabel('time', fontsize=14)
@@ -53,6 +57,10 @@ x_matadd_pycuda = [1e2, 1e3, 1e4]
 y_matadd_pycuda = [2.667999999985682e-05, 2.4330000000105655e-05, 2.454000000042811e-05]
 plt.plot(x_matadd_pycuda, y_matadd_pycuda, "black", label="pycuda")
 
+x_matadd_cuda = [1e2, 1e3, 1e4]
+y_matadd_cuda = [0.002780, 0.004260, 0.007070]
+plt.plot(x_matadd_cuda, y_matadd_cuda, "r", label="cuda")
+
 plt.title('matadd')
 plt.xlabel('mat length', fontsize=14)
 plt.ylabel('time', fontsize=14)
@@ -80,6 +88,10 @@ plt.plot(x_matmul_numba, y_matmul_numba, "-c", label="numba")
 x_matmul_pycuda = [1e2, 1e3, 1e4]
 y_matmul_pycuda = [2.394000000052188e-05, 6.0129999999958274e-05, 2.3519999999876972e-05]
 plt.plot(x_matmul_pycuda, y_matmul_pycuda, "black", label="pycuda")
+
+x_matmul_cuda = [1e2, 1e3, 1e4]
+y_matmul_cuda = [0.003354, 0.006734, 1.549046]
+plt.plot(x_matmul_cuda, y_matmul_cuda, "r", label="pycuda")
 
 plt.title('matmul')
 plt.xlabel('mat length', fontsize=14)

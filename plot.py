@@ -35,6 +35,7 @@ plt.ylabel('time')
 plt.xscale('log')
 plt.yscale('log')
 plt.legend(loc="upper left")
+plt.savefig('reduce.png', dpi=800)
 plt.show()
 
 x_matadd_python = [1e2, 1e3]
@@ -67,6 +68,7 @@ plt.ylabel('time')
 plt.xscale('log')
 plt.yscale('log')
 plt.legend()
+plt.savefig('matadd.png', dpi=800)
 plt.show()
 
 x_matmul_python = [1e2, 2e2]
@@ -99,4 +101,5 @@ plt.ylabel('time')
 plt.xscale('log')
 plt.yscale('log')
 plt.legend()
+plt.savefig('matmul.png', dpi=800)
 plt.show()

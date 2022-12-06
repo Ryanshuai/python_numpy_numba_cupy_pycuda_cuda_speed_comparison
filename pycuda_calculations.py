@@ -2,6 +2,7 @@ import pycuda.driver as driver
 from pycuda.compiler import SourceModule
 import pycuda.autoinit  # need this for decode mod string
 import numpy as np
+import cupy as cp
 
 # for reduction --------------------------------------------------------------------------------------------------------
 BLOCK_SIZE = 512
@@ -147,13 +148,16 @@ if __name__ == '__main__':
     from time import perf_counter
 
 
-    def measure_time(func, *args, test_count=10):
+    def gpu_measure_time(func, *args, test_count=10):
         func(*args)
-        start = perf_counter()
+        start = cp.cuda.Event()
+        end = cp.cuda.Event()
+        start.record()
         for _ in range(test_count):
             func(*args)
-        end = perf_counter()
-        return (end - start) / test_count
+        end.record()
+        end.synchronize()
+        return cp.cuda.get_elapsed_time(start, end) / 1000 / test_count
 
 
     A = np.random.rand(1000).astype(np.float32)
@@ -206,7 +210,7 @@ if __name__ == '__main__':
         res_pycuda_gpu = driver.mem_alloc(res_pycuda_cpu.nbytes)
         driver.memcpy_htod(A_pycuda_gpu, A_pycuda_cpu)
         print("Pycuda reduce time: ",
-              measure_time(pycuda_reduce, A_pycuda_gpu, len(A_pycuda_cpu), res_pycuda_gpu, test_count=10))
+              gpu_measure_time(pycuda_reduce, A_pycuda_gpu, len(A_pycuda_cpu), res_pycuda_gpu, test_count=10))
 
     print("\nMATADD: ******************************************************************************")
     for exp in range(2, 5):
@@ -225,8 +229,8 @@ if __name__ == '__main__':
         C_pycuda_cpu_f = C_pycuda_cpu.flatten()
         C_pycuda_gpu = driver.mem_alloc(C_pycuda_cpu_f.nbytes)
         print("Pycuda matmul time: ",
-              measure_time(pycuda_matadd, A_pycuda_cpu.shape[0], A_pycuda_gpu, B_pycuda_gpu, C_pycuda_gpu,
-                           test_count=10))
+              gpu_measure_time(pycuda_matadd, A_pycuda_cpu.shape[0], A_pycuda_gpu, B_pycuda_gpu, C_pycuda_gpu,
+                               test_count=10))
 
     print("\nMATMUL: ******************************************************************************")
     for exp in range(2, 5):
@@ -245,5 +249,5 @@ if __name__ == '__main__':
         C_pycuda_cpu_f = C_pycuda_cpu.flatten()
         C_pycuda_gpu = driver.mem_alloc(C_pycuda_cpu_f.nbytes)
         print("Pycuda matmul time: ",
-              measure_time(pycuda_matmul, A_pycuda_cpu.shape[0], A_pycuda_cpu.shape[1], B_pycuda_cpu.shape[1],
-                           A_pycuda_gpu, B_pycuda_gpu, C_pycuda_gpu, test_count=10))
+              gpu_measure_time(pycuda_matmul, A_pycuda_cpu.shape[0], A_pycuda_cpu.shape[1], B_pycuda_cpu.shape[1],
+                               A_pycuda_gpu, B_pycuda_gpu, C_pycuda_gpu, test_count=10))

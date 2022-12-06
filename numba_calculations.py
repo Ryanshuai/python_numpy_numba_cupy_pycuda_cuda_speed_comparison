@@ -7,7 +7,7 @@ BLOCK_SIZE = 512
 BLOCK_SIZE_2 = BLOCK_SIZE * 2
 
 
-@cuda.jit
+@cuda.jit(cache=True)
 def numba_reduce_thread(nums, res):
     partial_sum = cuda.shared.array(shape=BLOCK_SIZE_2, dtype=numba.float32)
     thread_idx = cuda.threadIdx.x
@@ -45,7 +45,7 @@ def numba_reduce(nums, res):
 TILE_SIZE = 32
 
 
-@cuda.jit
+@cuda.jit(cache=True)
 def numba_matadd_thread(mat_A, mat_B, mat_res):
     global_x, global_y = cuda.grid(2)
 
@@ -62,7 +62,7 @@ def numba_matadd(mat_A, mat_B, mat_res):
 
 
 # for matmul -----------------------------------------------------------------------------------------------------------
-@cuda.jit
+@cuda.jit(cache=True)
 def numba_matmul_thread(mat_A, mat_B, mat_res):
     A_block = cuda.shared.array(shape=(TILE_SIZE, TILE_SIZE), dtype=numba.float32)
     B_block = cuda.shared.array(shape=(TILE_SIZE, TILE_SIZE), dtype=numba.float32)
